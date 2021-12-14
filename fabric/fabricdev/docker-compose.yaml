@@ -1,0 +1,256 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+version: '2'
+
+networks:
+  net:
+      ipam:
+         config:
+         - subnet: 170.21.0.0/16
+           gateway: 170.21.0.1
+
+services:
+
+  orderer.work.sam.com:
+  # orderer.sam.com:
+    container_name: orderer.work.sam.com
+    # container_name: orderer.sam.com
+    image: hyperledger/fabric-orderer:2.0.0
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=debug
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/fabric/genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=WorkMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/msp
+      # - ORDERER_GENERAL_TLS_ENABLED=true
+      # - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/fabric/tls/server.key
+      # - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/fabric/tls/server.crt
+      # - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/fabric/tls/ca.crt]
+    working_dir: /etc/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ./var/orderer/hyperledger/:/var/hyperledger/ 
+    - ./artifacts/genesis.block:/etc/hyperledger/fabric/genesis.block
+    - ./crypto-config/peerOrganizations/work.sam.com/peers/orderer.work.sam.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/work.sam.com/peers/orderer.work.sam.com/tls/:/etc/hyperledger/fabric/tls
+    ports:
+    - 7050:7050
+    networks:
+      - net
+
+  peer0.work.sam.com:
+    container_name: peer0.work.sam.com
+    image: hyperledger/fabric-peer:2.0.0
+    environment:
+      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      # The following setting starts chaincode containers on the same bridge network as the peers
+      # https://docs.docker.com/compose/networking/
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_net
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      # - CORE_PEER_TLS_ENABLED=true
+      # - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      # - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      # - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.work.sam.com
+      - CORE_PEER_ADDRESS=peer0.work.sam.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.work.sam.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.work.sam.com:7051
+      - CORE_PEER_LOCALMSPID=WorkMSP
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    volumes:
+      - ./var/peer0/hyperledger/:/var/hyperledger/ 
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/work.sam.com/peers/peer0.work.sam.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/work.sam.com/peers/peer0.work.sam.com/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - 7051:7051
+      - 7053:7053
+    networks:
+      - net
+
+  peer1.work.sam.com:
+    container_name: peer1.work.sam.com
+    image: hyperledger/fabric-peer:2.0.0
+    environment:
+      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      # The following setting starts chaincode containers on the same bridge network as the peers
+      # https://docs.docker.com/compose/networking/
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_net
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      # - CORE_PEER_TLS_ENABLED=true
+      # - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      # - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      # - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer1.work.sam.com
+      - CORE_PEER_ADDRESS=peer1.work.sam.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.work.sam.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.work.sam.com:7051
+      - CORE_PEER_LOCALMSPID=WorkMSP
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    volumes:
+      - ./var/peer1/hyperledger/:/var/hyperledger/ 
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/work.sam.com/peers/peer1.work.sam.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/work.sam.com/peers/peer1.work.sam.com/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - 7061:7051
+      - 7063:7053
+    networks:
+      - net
+
+  peer2.work.sam.com:
+    container_name: peer2.work.sam.com
+    image: hyperledger/fabric-peer:2.0.0
+    environment:
+      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      # The following setting starts chaincode containers on the same bridge network as the peers
+      # https://docs.docker.com/compose/networking/
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_net
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      # - CORE_PEER_TLS_ENABLED=true
+      # - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      # - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      # - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer2.work.sam.com
+      - CORE_PEER_ADDRESS=peer2.work.sam.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.work.sam.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.work.sam.com:7051
+      - CORE_PEER_LOCALMSPID=WorkMSP
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    volumes:
+      - ./var/peer2/hyperledger/:/var/hyperledger/ 
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/work.sam.com/peers/peer2.work.sam.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/work.sam.com/peers/peer2.work.sam.com/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - 7071:7051
+      - 7073:7053
+    networks:
+      - net
+
+  peer3.work.sam.com:
+    container_name: peer3.work.sam.com
+    image: hyperledger/fabric-peer:2.0.0
+    environment:
+          - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      # The following setting starts chaincode containers on the same bridge network as the peers
+      # https://docs.docker.com/compose/networking/
+          - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_net
+          - CORE_LOGGING_LEVEL=DEBUG
+          - CORE_PEER_GOSSIP_USELEADERELECTION=true
+          - CORE_PEER_GOSSIP_ORGLEADER=false
+          - CORE_PEER_PROFILE_ENABLED=true
+          # - CORE_PEER_TLS_ENABLED=true
+          # - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+          # - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+          # - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+          - CORE_PEER_ID=peer3.work.sam.com
+          - CORE_PEER_ADDRESS=peer3.work.sam.com:7051
+          - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.work.sam.com:7051
+          - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.work.sam.com:7051
+          - CORE_PEER_LOCALMSPID=WorkMSP
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    volumes:
+          - ./var/peer3/hyperledger/:/var/hyperledger/ 
+          - /var/run/docker.sock:/var/run/docker.sock
+          - ./crypto-config/peerOrganizations/work.sam.com/peers/peer3.work.sam.com/msp:/etc/hyperledger/fabric/msp
+          - ./crypto-config/peerOrganizations/work.sam.com/peers/peer3.work.sam.com/tls:/etc/hyperledger/fabric/tls
+    ports:
+          - 7081:7051
+          - 7083:7053
+    networks:
+          - net
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:2.0.0
+    tty: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/Admin@work.sam.com/msp
+    working_dir: /etc/hyperledger/fabric
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./artifacts/:/etc/hyperledger/fabric/artifacts/
+      - ./crypto-config/peerOrganizations/work.sam.com/users/User1@work.sam.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/work.sam.com/users/User1@work.sam.com/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config/peerOrganizations/work.sam.com/users/Admin@work.sam.com:/etc/hyperledger/fabric/Admin@work.sam.com
+      - ./../chaincode:/opt/gopath/src/chaincode
+    depends_on:
+      - orderer.work.sam.com
+      - peer0.work.sam.com
+      - peer1.work.sam.com
+      - peer2.work.sam.com
+      - peer3.work.sam.com
+    networks:
+      - net
+  mongo:
+    image: mongo
+    ports:
+      - "37017:27017"
+    volumes:
+      - ./mongo/db :/data/db
+    container_name: mongoDB
+    networks:
+      - net
+
+  postwoman:
+    image: liyasthomas/postwoman
+    ports:
+      - "31000:30000"
+   # command: "npm run dev"
+    container_name: postwoman
+    networks:
+      - net
+
+  redis:
+    image: redis
+    ports:
+      - "6079:6379"
+    volumes:
+      - ./redis/data:/data
+      - ./redis/etc/redis.conf:/etc/redis/redis.conf
+    command: redis-server /etc/redis/redis.conf
+    container_name: redis
+    networks:
+      - net
+
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/opt/dist:/opt/dist
+      - ./nginx/opt/log:/var/logs
+      - ./nginx/etc/nginx.conf:/etc/nginx/nginx.conf
+    #command: 
+    container_name: nginx
+    networks:
+      - net
+
+  mongo-express:
+    image: mongo-express
+    restart: always 
+    ports:
+      - 8081:8081
+    container_name: mongoexpress
+    networks:
+      - net

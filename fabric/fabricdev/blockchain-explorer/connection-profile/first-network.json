@@ -1,0 +1,58 @@
+{
+	"name": "first-network",
+	"version": "1.0.0",
+	"client": {
+		"tlsEnable": false,
+		"adminCredential": {
+			"id": "admin",
+			"password": "exploreradminpw"
+		},		
+		"organization": "Work",
+		"connection": {
+			"timeout": {
+				"peer": {
+					"endorser": "300"
+				},
+				"orderer": "300"
+			}
+		}
+	},
+	"channels": {
+		"SamChannel": {
+			"peers": {
+				"peer0.work.sam.com": {	}
+			},
+			"connection": {
+				"timeout": {
+					"peer": {
+						"endorser": "6000",
+						"eventHub": "6000",
+						"eventReg": "6000"
+					}
+				}
+			}
+		}
+	},
+	"organizations": {
+		"Work": {
+			"mspid": "WorkMSP",
+			"adminPrivateKey": {
+				"path": "/tmp/crypto/peerOrganizations/work.sam.com/users/Admin@work.sam.com/msp/keystore/priv_sk"
+			},
+			"peers": ["peer0.work.sam.com"],
+			"signedCert": {
+				"path": "/tmp/crypto/peerOrganizations/work.sam.com/users/Admin@work.sam.com/msp/signcerts/Admin@work.sam.com-cert.pem"
+			}
+		}
+	},
+	"peers": {
+		"peer0.work.sam.com": {
+			"url": "grpc://127.0.0.1:7051"
+		}
+	},
+	"orderers": {
+		"orderer.work.sam.com": {
+			"url": "grpc://127.0.0.1:7050"
+		}
+	}
+}

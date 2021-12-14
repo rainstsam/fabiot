@@ -1,0 +1,153 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+// const SYS_CFG=require('../setting')
+var app = require('../app');
+// var {releaseport} = require('../utils/systools')
+var debug = require('debug')('demo:server');
+var http = require('http');
+var WebSocket = require('ws');
+var msgFun = require('../serveice/msg')
+var vote=require('../serveice/vote')
+var SYS_CFG = require('../setting')
+
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+// releaseport(port)
+// app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app.callback());
+
+
+/* 
+*websocket
+*开启websocket服务 监听3000端口 收到任何消息均广播
+*合法的消息内容有 :
+*resVote 投票响应
+*reqReg 注册\登记请求
+*isReg 确认登记
+*online 设备在线--不是网关
+*reqCnt 请求设备连接
+*browser 浏览器连接请求
+ */
+var wss = new WebSocket.Server({
+  clientTracking:true,
+  server
+});
+wss.broadcast = function broadcast(ws) {
+  wss.clients.forEach(function each(client) {
+    client.send(ws);
+  });
+};
+vote.autoVote()
+wss.on('connection', ws => {  
+  ws.on('message', async (msg) => { 
+    wss.broadcast(msg)
+    console.log(msg);
+    var data = JSON.parse(msg)    
+    var req = data.header.req
+    if (req === 'resVote') {
+      await msgFun.resVote(msg);
+      return
+    } else if (req === 'reqReg') {
+      await msgFun.reqReg(msg);
+      return
+    } else if (req === 'isReg') {
+      await msgFun.isReg(msg);
+      return
+    } else if (req === 'isCnt') {
+      await msgFun.isCnt(msg);
+      return
+    } else if (req === 'reqCnt') {      
+      await msgFun.reqCnt(msg);
+      return
+    } else if (req === 'online') {      
+      await msgFun.online(msg);
+      return
+    } else if (req === 'browser') {      
+      ws.send(msg)
+      return
+    } else {
+      console.log('undefined message!');
+      return
+    }
+  });
+})
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) { 
+  if (error.syscall !== 'listen') {
+    throw error;
+  }  
+  var bind = typeof port === 'string' ?
+    'Pipe ' + port :
+    'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE': 
+      console.error(bind + ' is alre ady in use');
+      process.exit(1);      
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string' ?
+    'pipe ' + addr :
+    'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

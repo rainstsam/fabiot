@@ -1,0 +1,20 @@
+# OrdererOrgs:
+#   - Name: Orderer
+#     Domain: sam.com
+#     Specs:
+#       - Hostname: orderer
+PeerOrgs:
+  - Name: Work.MSP
+    Domain: work.sam.com
+    Template:
+      Count: 4  
+    Users:
+      Count: 5
+    Specs:
+      - Hostname: orderer
+  # - Name: test
+  #   Domain: test.sam.com
+  #   Template:
+  #     Count: 1
+  #   Users:
+  #     Count: 1
